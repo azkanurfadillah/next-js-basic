@@ -1,10 +1,27 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import Link from 'next/link'
 import styles from '../../styles/Home.module.css'
 
+const mdbapi = "https://api.themoviedb.org/3/tv/popular?api_key=c3028a5455afc66958796057fb3b0d97&language=en-US&page=1"
 
+export async function getStaticProps(context) {
+    const res = await fetch(mdbapi)
+    const data = await res.json()
 
-export default function TvShow({ data }) {
+    if (!data) {
+        return {
+            notFound: true,
+        }
+    }
+
+    return {
+        props: { data }, // will be passed to the page component as props
+    }
+}
+
+export default function TvShows({ data }) {
+    console.log({ data })
     return (
         <div className={styles.container}>
             <Head>
@@ -14,11 +31,32 @@ export default function TvShow({ data }) {
             </Head>
 
             <main className={styles.main}>
-                <h1 className={styles.title}>
-                    Welcome to [TV SHOW NAME]
-                </h1>
+                <h1 className={styles.title}>Current Popular TV Shows </h1>
 
+                <div className={styles.grid}>
+                    {data?.results && data?.results.map(d => {
+                        return (
+                            <Link key={d?.id} href={`/tv-show/${d?.id}`} >
+                                <a className={styles.card}>
+                                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                        <h2>{d?.original_name}</h2>
+                                        <p>Country: {d?.origin_country[0]} :: {d?.first_air_date}</p>
+                                    </div>
+                                    <Image
+                                        src={`https://image.tmdb.org/t/p/original/${d?.poster_path}`}
+                                        alt="Vercel Logo"
+                                        width={500}
+                                        height={700}
+                                        layout="responsive"
+                                        placeholder="blur"
+                                        blurDataURL={`data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mO8ePFSPQAH5AL18b4aMAAAAABJRU5ErkJggg==`}
+                                    />
+                                </a>
+                            </Link>
+                        )
+                    })}
 
+                </div>
             </main>
 
             <footer className={styles.footer}>

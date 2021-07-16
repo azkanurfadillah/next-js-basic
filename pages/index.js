@@ -3,12 +3,22 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 
-const mdbapi = "https://api.themoviedb.org/3/tv/popular?api_key=c3028a5455afc66958796057fb3b0d97&language=en-US&page=1"
 
-export async function getStaticProps(context) {
-  const res = await fetch(mdbapi)
+const bearer = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGl0YXMiOjUsIm5hbWFEZXBhbiI6IlN1Yi1EaXN0cmlidXRvciIsIm5hbWFCZWxha2FuZyI6IjU1MDYiLCJzdXJlbEtvbnRhayI6InN1YmRpczU1MDZAbWFpbC5jb20iLCJqYWJhdGFuIjo0LCJzdGF0dXNLZWFrdGlmYW4iOnRydWUsInN0YXR1c0hhbnR1IjpmYWxzZSwibmFtYURvbXBldCI6IjI1NDQ0Mzg5Iiwic3VyZWwiOiJvZmZpY2VzdWJkaXM1NTA2QG1haWwuY29tIiwiQ29tcGFueSI6dHJ1ZSwiaWF0IjoxNjI2MzQxODAzLCJleHAiOjE2MjY0MjgyMDN9.9oVd_ntTqEiP1HpPjjE2059CCp3KomHhGaixrFhP4x4";
+
+export async function getServerSideProps(context) {
+  const res = await fetch(`https://wwb6j89602.execute-api.ap-southeast-1.amazonaws.com/dev/order?as=buyer`, {
+    method: 'GET',
+    withCredentials: true,
+    credentials: 'include',
+    headers: {
+      'Authorization': bearer,
+      // 'X-FP-API-KEY': 'iphone', //it can be iPhone or your any other attribute
+      'Content-Type': 'application/json'
+    }
+  })
   const data = await res.json()
-
+  console.log("getServerSideProps", { data })
   if (!data) {
     return {
       notFound: true,
@@ -20,8 +30,11 @@ export async function getStaticProps(context) {
   }
 }
 
-export default function Home({ data }) {
-  console.log({ data })
+export default function Home({ data: { data } }) {
+  function formattingNumber(value) {
+    if (value) return value.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ".");
+    return 0
+  }
   return (
     <div className={styles.container}>
       <Head>
@@ -31,37 +44,32 @@ export default function Home({ data }) {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>Current Popular TV Shows </h1>
+        <h3> Hello World.</h3>
+        <Link href="/tv-show" className={styles.title}>
+          <a style={{ fontWeight: "bold", color: "#0070f3" }}>Go to TV Shows Page</a>
+        </Link>
 
-        {/* <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p> */}
-
-        <div className={styles.grid}>
-          {data?.results && data?.results.map(d => {
-            return (
-              <Link key={d?.id} href={`/tv-show/${d?.id}`} >
-                <a className={styles.card}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <h2>{d?.original_name}</h2>
-                    <p>Country: {d?.origin_country[0]} :: {d?.first_air_date}</p>
+        {data?.rows &&
+          <div style={{ marginTop: "2.5rem" }}>
+            <p>GET /dev/order?as=buyer :: count {data?.count}</p>
+            {
+              data?.rows.map((d) => {
+                return (
+                  <div key={d?.id} style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "768px",
+                  }}>
+                    <p>Nomor Pesanan: {d?.nomorPesanan}</p>
+                    <span>
+                      <p>Jumlah: {formattingNumber(d?.jumlah)}</p>
+                      <p>Total Harga: {formattingNumber(d?.totalHarga)}</p>
+                    </span>
                   </div>
-                  <Image
-                    src={`https://image.tmdb.org/t/p/original/${d?.poster_path}`}
-                    alt="Vercel Logo"
-                    width={500}
-                    height={700}
-                    layout="responsive"
-                    placeholder="blur"
-                    blurDataURL={`data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mO8ePFSPQAH5AL18b4aMAAAAABJRU5ErkJggg==`}
-                  />
-                </a>
-              </Link>
-            )
-          })}
-
-        </div>
+                )
+              })
+            }
+          </div>}
       </main>
 
       <footer className={styles.footer}>
@@ -76,6 +84,6 @@ export default function Home({ data }) {
           </span>
         </a>
       </footer>
-    </div>
+    </div >
   )
 }

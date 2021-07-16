@@ -3,17 +3,37 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../../../styles/Home.module.css'
 
-const mdbapi = "https://api.themoviedb.org/3/tv/{tv_id}?api_key=c3028a5455afc66958796057fb3b0d97&language=en-US&page=1"
+const mdbapi = "https://api.themoviedb.org/3/tv/popular?api_key=c3028a5455afc66958796057fb3b0d97&language=en-US&page=1"
 
 // This function gets called at build time
 export async function getStaticPaths() {
-    return {
-        // Only `/posts/1` and `/posts/2` are generated at build time
-        paths: [],
-        // Enable statically generating additional pages
-        // For example: `/posts/3`
-        fallback: true,
+    const res = await fetch(mdbapi)
+    const data = await res.json()
+    // console.log("static path", { data: data?.results })
+    if (!data?.results) {
+        return {
+            paths: [],
+            fallback: true,
+        }
     }
+
+    // Get the paths we want to pre-render based on posts
+    const paths = data?.results.map((d) => ({
+        params: { id: `${d.id}` },
+    }))
+
+
+    // We'll pre-render only these paths at build time.
+    // { fallback: false } means other routes should 404.
+    return { paths, fallback: false }
+
+    // return {
+    //     // Only `/posts/1` and `/posts/2` are generated at build time
+    //     paths: [{ params: { id: '1' } }, { params: { id: '2' } }],
+    //     // Enable statically generating additional pages
+    //     // For example: `/posts/3`
+    //     fallback: true,
+    //   }
 }
 
 // This also gets called at build time
@@ -26,9 +46,10 @@ export async function getStaticProps({ params }) {
     // Pass post data to the page via props
     return {
         props: { post },
-        // Re-generate the post at most once per second
+
+        // Re-generate the post at most once per  3 seconds
         // if a request comes in
-        revalidate: 1,
+        revalidate: 3, //An optional amount in seconds after which a page re-generation can occur (defaults to: false or no revalidating). More on Incremental Static Regeneration
     }
 }
 
@@ -61,7 +82,7 @@ export default function TvShowById({ post }) {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <Link className={styles.description} href="/" passHref>
-                <p> back </p>
+                <a style={{ fontWeight: "bold", color: "#0070f3" }} > back </a>
             </Link>
             <main className={styles.main} style={{ width: "80%" }}>
                 <h1 className={styles.title}>
